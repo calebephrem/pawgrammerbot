@@ -6,7 +6,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 export default {
   name: "askai",
   description: "Ask Groq Ai Model",
-  aliases: ["ai", "dontasktoaskjustask"],
+  aliases: ["ai"],
   callback: async (client, message, args) => {
     try {
       if (message.author.bot) return;
