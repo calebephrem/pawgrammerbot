@@ -1,12 +1,13 @@
 {
-  "name": "meow",
+  "name": "pawgrammer",
   "version": "1.0.0",
-  "description": "",
+  "description": "DevHub's documentation, references and news bot",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node .",
-    "dev": "node --watch ."
+    "dev": "node --watch .",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "Caleb Ephrem",
