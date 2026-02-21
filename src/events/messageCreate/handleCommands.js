@@ -65,7 +65,25 @@ export default async (client, message) => {
         }
       }
     }
+
     commandObject.callback(client, message, args);
+
+    const defaultReaction = "👀";
+
+    let emoji;
+    if (commandObject.react === true) {
+      emoji = defaultReaction;
+    } else if (typeof commandObject.react === "string") {
+      emoji = commandObject.react;
+    }
+
+    if (emoji) {
+      try {
+        await message.react(emoji);
+      } catch (err) {
+        console.error("Failed to react to message:", err);
+      }
+    }
   } catch (err) {
     console.error("Prefix Command Error:", err);
   }

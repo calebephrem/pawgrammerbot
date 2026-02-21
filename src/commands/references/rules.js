@@ -4,6 +4,7 @@ export default {
   name: "rules",
   description: "Sends link to rule channel",
   aliases: ["rule", "communityrules"],
+  react: true,
   callback: async (client, message, args) => {
     try {
       const config = await getConfig();

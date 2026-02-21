@@ -7,10 +7,10 @@ export default {
   name: "askai",
   description: "Ask Groq Ai Model",
   aliases: ["ai", "dontasktoaskjustask"],
+  react: true,
   callback: async (client, message, args) => {
     try {
       if (message.author.bot) return;
-      await message.react("👀");
       await message.channel.sendTyping();
 
       const question = args.join(" ");

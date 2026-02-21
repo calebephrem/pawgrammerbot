@@ -7,6 +7,7 @@ export default {
   name: "mdn",
   description: "Search MDN Web Docs",
   aliases: ["docs", "mozilla", "developer", "mdnsearch"],
+  react: "📚",
   callback: async (client, message, args) => {
     try {
       const query = args.join(" ");
