@@ -23,7 +23,9 @@ export default {
       const data = await res.json();
 
       if (!data.documents || data.documents.length === 0) {
-        return message.channel.send(`No MDN results found for **${query}**`);
+        return message.channel.send(
+          `¯\\_(ツ)_/¯ No MDN results found for **${query}**`,
+        );
       }
 
       const doc = data.documents[0];

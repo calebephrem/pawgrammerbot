@@ -7,7 +7,6 @@ export default {
   name: "askai",
   description: "Ask Groq Ai Model",
   aliases: ["ai", "dontasktoaskjustask"],
-  react: true,
   callback: async (client, message, args) => {
     try {
       if (message.author.bot) return;
@@ -19,7 +18,7 @@ export default {
         messages: [
           {
             role: "user",
-            content: `Answer the following question concisely:\n${question}`,
+            content: `Answer the following question concisely **only if it is related to tech, coding, development, or programming**. If it is not, simply reply: "I cannot provide an answer for this question because it is not related to tech, coding, development, or programming."\n${question}`,
           },
         ],
         model: "llama-3.3-70b-versatile",

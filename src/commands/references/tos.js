@@ -2,7 +2,6 @@ export default {
   name: "tos",
   description: "Discord Terms of Service",
   aliases: ["terms", "termsofservice", "discordtos", "guidelines", "guideline"],
-  react: true,
   callback: async (client, message, args) => {
     try {
       return message.channel

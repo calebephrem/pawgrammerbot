@@ -17,7 +17,7 @@ export default async (client, message) => {
   }
 
   try {
-    const prefixes = [".", "++"];
+    const prefixes = ["?", "++"];
     const prefix = prefixes.find((p) => message.content.startsWith(p));
     if (!prefix) return;
 
@@ -71,10 +71,10 @@ export default async (client, message) => {
     const defaultReaction = "👀";
 
     let emoji;
-    if (commandObject.react === true) {
-      emoji = defaultReaction;
-    } else if (typeof commandObject.react === "string") {
+    if (typeof commandObject.react === "string") {
       emoji = commandObject.react;
+    } else if (commandObject.react !== false) {
+      emoji = defaultReaction;
     }
 
     if (emoji) {
