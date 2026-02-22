@@ -20,6 +20,8 @@ It helps contributors stay informed, learn faster, and access curated resources,
 - **Community References**
   - `++dontasktoask` (alias: `++ask`) → [Don’t Ask to Ask](https://dontasktoask.com)
   - `++nohello` → [No Hello](https://nohello.net)
+  - `++xyproblem` → [XY Problem](https://xyproblem.info/)
+  - `++org` → [DevHub Organizaation](https://github.com/open-devhub/)
   - `++rules` → DevHub’s community rules
   - `++tos` → Discord’s Terms of Service
 
@@ -36,32 +38,30 @@ Use either `++[cmd]` or `?[cmd]` (without brackets).
 ++news
 ++dontasktoask
 ++rules
+++org
 ```
 
 ## 🛠️ Commands Overview
 
-| Command        | Aliases     | Prefix Example       | Description                               |
-| -------------- | ----------- | -------------------- | ----------------------------------------- |
-| `askai`        | `ai`        | `++ai [query]`       | Ask the AI anything—technical or general. |
-| `articles`     | `devto`     | `++articles [topic]` | Fetch dev.to articles by topic.           |
-| `mdn`          | `docs`      | `++mdn [query]`      | Search MDN documentation.                 |
-| `news`         | `headlines` | `++news`             | Get latest developer/tech news.           |
-| `dontasktoask` | `ask`       | `++dontasktoask`     | Show the “Don’t Ask to Ask” reference.    |
-| `nohello`      | `hello`     | `++nohello`          | Show the “No Hello” reference.            |
-| `rules`        | —           | `++rules`            | Display DevHub’s community rules.         |
-| `tos`          | —           | `++tos`              | Display Discord’s Terms of Service.       |
+| Command        | Alias       | Prefix Example   | Description                               |
+| -------------- | ----------- | ---------------- | ----------------------------------------- |
+| `askai`        | `ai`        | `++ai [query]`   | Ask the AI anything—technical or general. |
+| `articles`     | `devto`     | `++articles`     | Fetch dev.to articles by topic.           |
+| `mdn`          | `docs`      | `++mdn [query]`  | Search MDN documentation.                 |
+| `news`         | `headlines` | `++news`         | Get latest developer/tech news.           |
+| `dontasktoask` | `ask`       | `++dontasktoask` | Show the “Don’t Ask to Ask” reference.    |
+| `nohello`      | `hello`     | `++nohello`      | Show the “No Hello” reference.            |
+| `xyproblem`    | `xyp`       | `++xyproblem`    | Show the "XY Problem” reference.          |
+| `github`       | `org`       | `++github`       | Show the GitHub organization link         |
+| `rules`        | —           | `++rules`        | Display DevHub’s community rules.         |
+| `tos`          | terms       | `++tos`          | Display Discord’s Terms of Service.       |
 
 ## 🗺️ Roadmap
 
 Pawgrammer is evolving to cover more documentation and references. Planned additions include:
 
 - **Expanded Documentation Sources**
-  - Add support for [discord.js](https://discord.js.org) docs (`++djs`)
-  - Add more language/framework docs (e.g., Python, Rust, Go)
-
-- **Community Resources**
-  - More cultural references (e.g., “XY Problem” guide, “RTFM” etiquette)
-  - Contributor spotlight and recognition feeds
+  - Add support for [discord.js](https://discord.js.org) docs (`++djs`) and add more language/framework docs (e.g., Python, Rust, Go)
 
 - **News & Updates**
   - Filtered feeds for open-source, security, and developer tooling
