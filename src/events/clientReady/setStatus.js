@@ -4,7 +4,7 @@ export default (client) => {
   client.user.setPresence({
     activities: [
       {
-        name: "i meow you",
+        name: "purrhaps you need docs? 😸",
         type: ActivityType.Playing,
       },
     ],
