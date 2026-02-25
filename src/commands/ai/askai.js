@@ -2,10 +2,11 @@ import "dotenv/config";
 import { Groq } from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const model = "llama-3.3-70b-versatile";
 
 export default {
   name: "askai",
-  description: "Ask Groq Ai Model",
+  description: `Ask ${model} Ai Model`,
   aliases: ["ai"],
   callback: async (client, message, args) => {
     try {
@@ -21,7 +22,7 @@ export default {
             content: `Answer the following question concisely **only if it is related to tech, coding, development, or programming**. If it is not, simply reply: "I cannot provide an answer for this question because it is not related to tech, coding, development, or programming."\n${question}`,
           },
         ],
-        model: "llama-3.3-70b-versatile",
+        model,
         temperature: 0.8,
         max_completion_tokens: 640,
         top_p: 1,
