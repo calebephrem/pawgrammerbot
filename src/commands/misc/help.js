@@ -1,3 +1,4 @@
+import { EmbedBuilder } from "discord.js";
 import path, { join } from "path";
 import { fileURLToPath } from "url";
 import getAllFiles from "../../utils/getAllFiles.js";
@@ -11,47 +12,43 @@ export default {
   /**
    *
    * @param {Client} client
-   * @param {Interaction} interaction
+   * @param {Message} message
    */
-  callback: (client, interaction) => {
+  callback: async (client, message) => {
     const prefixCommandsPath = join(__dirname, "..", "..", "commands");
 
     const prefixCommandsCategories = getAllFiles(prefixCommandsPath, true);
-    let helpText;
 
-    await(async () => {
-      const categoriesData = await Promise.all(
-        prefixCommandsCategories.map(async (category) => {
-          const categoryName = path.basename(category);
-          const commandFiles = getAllFiles(category).filter(
-            (file) => !file.endsWith("help.js"),
-          );
-          const commands = await Promise.all(
-            commandFiles.map(async (file) => {
-              let rel = path.relative(__dirname, file).replace(/\\/g, "/");
-              if (!rel.startsWith(".")) rel = "./" + rel;
-              const cmd = await import(rel);
-              return cmd;
-            }),
-          );
-          const commandsInCategory = commands.map(
-            (cmd) => `\`${cmd.default.name}\`: ${cmd.default.description}`,
-          );
-          return `**${categoryName}**\n${commandsInCategory.join("\n")}`;
-        }),
-      );
-      helpText = `Usage:\n\n\`++[cmd]\`\n\`?[cmd]\`\n\nAvailable Commands:\n\n${categoriesData.join("\n\n")}`;
-      // console.log(helpText);
-    })();
+    const categoriesData = await Promise.all(
+      prefixCommandsCategories.map(async (category) => {
+        const categoryName = path.basename(category);
+        const commandFiles = getAllFiles(category).filter(
+          (file) => !file.endsWith("help.js"),
+        );
+        const commands = await Promise.all(
+          commandFiles.map(async (file) => {
+            let rel = path.relative(__dirname, file).replace(/\\/g, "/");
+            if (!rel.startsWith(".")) rel = "./" + rel;
+            const cmd = await import(rel);
+            return cmd;
+          }),
+        );
+        const commandsInCategory = commands.map(
+          (cmd) => `\`${cmd.default.name}\`: ${cmd.default.description}`,
+        );
+        return `**${categoryName}**\n${commandsInCategory.join("\n")}`;
+      }),
+    );
+    const helpText = `Usage:\n\n\`++[cmd]\`\n\`?[cmd]\`\n\nAvailable Commands:\n\n${categoriesData.join("\n\n")}`;
 
     const embed = new EmbedBuilder()
       .setTitle("📘 Commands Guide")
       .setDescription(helpText.trim() || "No commands available.")
       .setColor(0x5865f2)
       .setFooter({
-        text: `Requested by ${interaction.user.tag} • PawgrammerBot`,
-        iconURL: interaction.user.displayAvatarURL(),
+        text: `Requested by ${message.author.tag} • PawgrammerBot`,
+        iconURL: message.author.displayAvatarURL(),
       });
-    return interaction.reply({ embeds: [embed] });
+    return message.reply({ embeds: [embed] });
   },
 };
