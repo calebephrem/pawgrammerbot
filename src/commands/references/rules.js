@@ -3,7 +3,7 @@ import getConfig from "../../utils/getConfig.js";
 export default {
   name: "rules",
   description: "Sends link to rule channel",
-  aliases: ["rule", "communityrules"],
+  aliases: ["rule", "communityrules", "rtfr"],
   callback: async (client, message, args) => {
     try {
       const config = await getConfig();
