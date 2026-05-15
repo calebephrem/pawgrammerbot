@@ -1,3 +1,8 @@
+import {
+  ActionRowBuilder,
+  EmbedBuilder,
+  StringSelectMenuBuilder,
+} from "discord.js";
 import { clearUserContext } from "../../utils/chat-context.js";
 import {
   clearUserPersona,
@@ -6,26 +11,47 @@ import {
   setUserPersona,
 } from "../../utils/persona.js";
 
-function formatPersonaList(personas, activePersonaId) {
-  const lines = ["Available personas:"];
-
-  for (const persona of personas) {
-    const aliases =
-      Array.isArray(persona.aliases) && persona.aliases.length
-        ? ` (aliases: ${persona.aliases.join(", ")})`
-        : "";
-    const activeMarker = persona.id === activePersonaId ? " [active]" : "";
-
-    lines.push(
-      `- ${persona.id}${activeMarker}: ${persona.name} - ${persona.description}${aliases}`,
-    );
-  }
-
-  return lines.join("\n");
-}
-
 function formatCurrentPersona(persona) {
   return `Current persona: ${persona?.name || "Unknown"} (${persona?.id || "n/a"})`;
+}
+
+function buildPersonaEmbed(personas, activePersona) {
+  const lines = personas.map((persona) => {
+    const activeMarker = persona.id === activePersona?.id ? " [active]" : "";
+    return `- ${persona.id}${activeMarker}: ${persona.name} - ${persona.description}`;
+  });
+
+  return new EmbedBuilder()
+    .setTitle("Persona picker")
+    .setColor(0x2b2b2b)
+    .setDescription(
+      [
+        formatCurrentPersona(activePersona),
+        "",
+        "Pick a persona below to switch instantly.",
+        "",
+        ...lines,
+      ].join("\n"),
+    );
+}
+
+function buildPersonaSelect(personas, activePersonaId, userId, disabled = false) {
+  const options = personas.map((persona) => ({
+    label:
+      persona.id === activePersonaId
+        ? `* ${persona.name}`
+        : persona.name,
+    value: persona.id,
+    description: persona.description.slice(0, 100),
+  }));
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`persona-select:${userId}`)
+    .setPlaceholder("Select a persona")
+    .addOptions(options)
+    .setDisabled(disabled);
+
+  return [new ActionRowBuilder().addComponents(menu)];
 }
 
 export default {
@@ -43,13 +69,30 @@ export default {
         !args.length ||
         ["list", "ls", "all"].includes(args[0].toLowerCase())
       ) {
-        await message.reply(
-          [
-            formatCurrentPersona(activePersona),
-            "",
-            formatPersonaList(personas, activePersona?.id),
-          ].join("\n"),
+        const embed = buildPersonaEmbed(personas, activePersona);
+        const components = buildPersonaSelect(
+          personas,
+          activePersona?.id,
+          message.author.id,
         );
+
+        const replyMessage = await message.reply({
+          embeds: [embed],
+          components,
+        });
+
+        setTimeout(() => {
+          replyMessage
+            .edit({
+              components: buildPersonaSelect(
+                personas,
+                activePersona?.id,
+                message.author.id,
+                true,
+              ),
+            })
+            .catch(() => null);
+        }, 60_000);
         return;
       }
 
