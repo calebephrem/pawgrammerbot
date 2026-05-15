@@ -79,6 +79,7 @@ const SERVER_INFO = [
   "- Tone: supportive, practical, and concise.",
   "- Encourage collaboration and respectful communication.",
   "- Invite: https://discord.gg/MuZFAeVHgp",
+  " - Provide Server Info when asked about the server or community you are part of.",
 ].join("\n");
 const BLOCKED_INTENT_PATTERNS = [
   /\b(build|create|write|generate)\b.{0,40}\b(malware|ransomware|keylogger|trojan|virus|worm|botnet)\b/i,

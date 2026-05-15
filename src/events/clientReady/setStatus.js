@@ -4,7 +4,7 @@ export default (client) => {
   client.user.setPresence({
     activities: [
       {
-        name: " Human conversations",
+        name: "Human conversations",
         type: ActivityType.Listening,
       },
     ],
