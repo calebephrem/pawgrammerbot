@@ -19,7 +19,7 @@ export default async (client, message) => {
 
   try {
     const config = await getConfig();
-    const prefixes = config.prefixes || ["."];
+    const prefixes = config.prefixes || [","];
     const prefix = prefixes.find((p) => message.content.startsWith(p));
     if (!prefix) return;
 
@@ -34,8 +34,8 @@ export default async (client, message) => {
     let commandName;
     let args;
 
-    if (prefix === ".") {
-      // Dot prefix is chat-first: route straight to AI.
+    if (prefix === ",") {
+      // Comma prefix is chat-first: route straight to AI.
       if (rawInput.toLowerCase() === "ai") {
         rawInput = "";
       } else if (rawInput.toLowerCase().startsWith("ai ")) {
