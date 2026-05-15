@@ -97,14 +97,6 @@ export default {
       }
 
       const action = args[0].toLowerCase();
-
-      if (
-        ["current", "status", "now", "active", "who", "me"].includes(action)
-      ) {
-        await message.reply(formatCurrentPersona(activePersona));
-        return;
-      }
-
       if (["default", "reset", "clear"].includes(action)) {
         clearUserPersona(message.author.id);
         clearUserContext(message.author.id);
