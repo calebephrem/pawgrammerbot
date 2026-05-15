@@ -2,14 +2,14 @@ import { generateText, stepCountIs } from "ai";
 import "dotenv/config";
 import { searchTool } from "../../tools/get-search.js";
 import { createResetContextTool } from "../../tools/reset-context.js";
-import { groq } from "../../utils/ai.js";
+import { groq, openRouter } from "../../utils/ai.js";
 import {
   appendUserTurn,
   clearUserContext,
   getUserContext,
 } from "../../utils/chat-context.js";
+import { DEFAULT_MODEL_ID, getUserModel } from "../../utils/model.js";
 import { getUserPersonaPrompt } from "../../utils/persona.js";
-const model = "openai/gpt-oss-120b";
 const MAX_QUESTION_CHARS = 1000;
 
 const REFUSAL_MESSAGE =
@@ -72,6 +72,15 @@ const BASE_SYSTEM_PROMPT = [
   "- Deliver actionable, implementation-ready answers.",
 ].join("\n");
 
+const SERVER_INFO = [
+  "Server context:",
+  "- DevHub is a friendly Discord community for programmers and creators.",
+  "- Focus areas: programming help, debugging, code reviews, learning resources, and building projects.",
+  "- Tone: supportive, practical, and concise.",
+  "- Encourage collaboration and respectful communication.",
+  "- Invite: https://discord.gg/MuZFAeVHgp",
+  " - Provide Server Info when asked about the server or community you are part of.",
+].join("\n");
 const BLOCKED_INTENT_PATTERNS = [
   /\b(build|create|write|generate)\b.{0,40}\b(malware|ransomware|keylogger|trojan|virus|worm|botnet)\b/i,
   /\b(phishing|credential\s*steal|steal\s+password|token\s+stealer)\b/i,
@@ -87,7 +96,7 @@ const JAILBREAK_PATTERNS = [
 
 export default {
   name: "askai",
-  description: `Ask ${model} Ai Model`,
+  description: "Ask the AI model",
   aliases: ["ai"],
   callback: async (client, message, args) => {
     try {
@@ -105,6 +114,7 @@ export default {
             "2. `$ai reset` to clear your AI context",
             "3. `$resetai` also works",
             "4. `$persona list` and `$persona set debugcoach`",
+            "5. `$model list` to pick a model",
           ].join("\n"),
         );
         return;
@@ -143,8 +153,24 @@ export default {
       );
       const systemPrompt = buildSystemPrompt(persona, personaPrompt);
 
+      const selectedModel = getUserModel(message.author.id) || {
+        id: DEFAULT_MODEL_ID,
+        provider: "groq",
+      };
+      if (
+        selectedModel.provider === "openrouter" &&
+        !process.env.OPENROUTER_API_KEY
+      ) {
+        await message.reply(
+          "OpenRouter is not configured yet. Add OPENROUTER_API_KEY to your environment and restart the bot.",
+        );
+        return;
+      }
+      const modelProvider =
+        selectedModel.provider === "openrouter" ? openRouter : groq;
+
       const result = await generateText({
-        model: groq(model),
+        model: modelProvider(selectedModel.id),
         system: systemPrompt,
         messages: conversation,
 
@@ -306,7 +332,7 @@ function getBestAnswer(result) {
 }
 
 function buildSystemPrompt(persona, personaPrompt) {
-  const sections = [BASE_SYSTEM_PROMPT];
+  const sections = [BASE_SYSTEM_PROMPT , SERVER_INFO];
 
   if (persona?.name) {
     sections.push(`Active persona: ${persona.name} (${persona.id})`);
