@@ -1,7 +1,10 @@
 import { generateText, stepCountIs } from "ai";
+import { AttachmentBuilder } from "discord.js";
 import "dotenv/config";
 import { searchTool } from "../../tools/get-search.js";
+import { fetchStock, stockTool } from "../../tools/get-stock.js";
 import { createResetContextTool } from "../../tools/reset-context.js";
+import { renderStockCard } from "../../utils/stock-card.js";
 import { groq, openRouter } from "../../utils/ai.js";
 import {
   appendUserTurn,
@@ -13,13 +16,15 @@ import { getUserPersonaPrompt } from "../../utils/persona.js";
 import { recordUsage } from "../../utils/user-stats.js";
 const MAX_QUESTION_CHARS = 1000;
 
+// When a message contains image attachments we bypass the user's selected
+// model and route to a multimodal model that can actually read images.
+const VISION_MODEL_ID = "nex-agi/nex-n2-pro:free";
+const MAX_IMAGE_ATTACHMENTS = 4;
+
 const REFUSAL_MESSAGE =
-  "I can’t help with that request due to safety restrictions.\n" +
-  "Try something like:\n" +
-  "- explain a programming concept\n" +
-  "- debug code\n" +
-  "- build or optimize a feature\n" +
-  "- find technical resources";
+  "I can't help with that due to safety restrictions.\n" +
+  "But I can help with most other things — just ask!";
+
 
 const BASE_SYSTEM_PROMPT = [
   "Priority (strict order):",
@@ -42,10 +47,11 @@ const BASE_SYSTEM_PROMPT = [
   "- Avoid generic advice. Be concrete.",
 
   "Interaction behavior:",
+  "- Be natural and conversational. You don't have to be overly formal or rigid.",
   "- If the request is unclear, ask exactly ONE precise clarifying question.",
   "- If multiple interpretations exist, pick the most likely one and proceed.",
   "- Do not ask unnecessary follow-ups.",
-  "- Assume user is technical. Skip basics.",
+  "- Assume user is technical. Skip basics unless asked.",
 
   "Response format:",
   "- Keep output concise and dense.",
@@ -56,7 +62,8 @@ const BASE_SYSTEM_PROMPT = [
   "- If giving code, ensure it compiles or is logically correct.",
 
   "Tool usage:",
-  "- Use tools only when they add clear value.",
+  "- Use tools when they add value.",
+  "- For stock/ticker/share-price questions, call the stock tool. The bot renders a price card automatically. You can give a longer, more conversational reply (not just one-line).",
   "- For web search: prioritize official docs, primary sources, or well-known repos.",
   "- Always include direct links when using web results.",
   "- Never fabricate sources.",
@@ -105,7 +112,10 @@ export default {
       await message.channel.sendTyping();
 
       const question = args.join(" ");
-      if (!question) {
+      const imageAttachments = getImageAttachments(message);
+
+      // Allow image-only messages (no text) since the model can describe them.
+      if (!question && !imageAttachments.length) {
         await message.reply(
           [
             "Please provide a question.",
@@ -148,16 +158,24 @@ export default {
         return;
       }
 
-      const conversation = await buildConversation(message, question);
+      const conversation = await buildConversation(
+        message,
+        question,
+        imageAttachments,
+      );
       const { persona, prompt: personaPrompt } = getUserPersonaPrompt(
         message.author.id,
       );
       const systemPrompt = buildSystemPrompt(persona, personaPrompt);
 
-      const selectedModel = getUserModel(message.author.id) || {
-        id: DEFAULT_MODEL_ID,
-        provider: "groq",
-      };
+      // Images require a multimodal model, so override the user's choice and
+      // route through OpenRouter's vision-capable model instead.
+      const selectedModel = imageAttachments.length
+        ? { id: VISION_MODEL_ID, provider: "openrouter" }
+        : getUserModel(message.author.id) || {
+            id: DEFAULT_MODEL_ID,
+            provider: "groq",
+          };
       if (
         selectedModel.provider === "openrouter" &&
         !process.env.OPENROUTER_API_KEY
@@ -175,12 +193,13 @@ export default {
         system: systemPrompt,
         messages: conversation,
 
-        temperature: 0.8,
-        maxOutputTokens: 640,
+        temperature: 0.9,
+        maxOutputTokens: 1024,
         topP: 1,
         stopWhen: stepCountIs(5),
         tools: {
           search: searchTool,
+          stock: stockTool,
           resetContext: createResetContextTool(message.author.id),
         },
       });
@@ -215,6 +234,9 @@ export default {
           allowedMentions: { parse: [] },
         });
       }
+
+      // If the AI looked up a stock, render and attach a visual price card.
+      await sendStockCards(message, result);
 
       const usedResetContext = wasToolUsed(result, "resetContext");
       if (!usedResetContext) {
@@ -252,7 +274,7 @@ export default {
   },
 };
 
-async function buildConversation(message, question) {
+async function buildConversation(message, question, imageAttachments = []) {
   const conversation = [];
 
   const existingMessages = getUserContext(message.author.id);
@@ -265,11 +287,44 @@ async function buildConversation(message, question) {
     conversation.push(replyContext);
   }
 
-  conversation.push({
-    role: "user",
-    content: `Answer the following question **only if it is a safe, appropriate question**.\n${question}`,
-  });
+  const promptText = `Answer the following question **only if it is a safe, appropriate question**.\n${
+    question || "Describe and analyze the attached image(s)."
+  }`;
+
+  if (imageAttachments.length) {
+    // Multimodal user turn: text prompt + image parts (AI SDK v6 format).
+    conversation.push({
+      role: "user",
+      content: [
+        { type: "text", text: promptText },
+        ...imageAttachments.map((url) => ({
+          type: "image",
+          image: new URL(url),
+        })),
+      ],
+    });
+  } else {
+    conversation.push({
+      role: "user",
+      content: promptText,
+    });
+  }
+
   return conversation;
+}
+
+function getImageAttachments(message) {
+  if (!message.attachments?.size) return [];
+
+  return [...message.attachments.values()]
+    .filter((attachment) => {
+      const type = attachment.contentType || "";
+      if (type.startsWith("image/")) return true;
+      // Fallback for attachments without a contentType set by Discord.
+      return /\.(png|jpe?g|gif|webp)$/i.test(attachment.name || "");
+    })
+    .slice(0, MAX_IMAGE_ATTACHMENTS)
+    .map((attachment) => attachment.url);
 }
 
 async function getReplyContext(message) {
@@ -359,6 +414,57 @@ function buildSystemPrompt(persona, personaPrompt) {
   }
 
   return sections.join("\n\n");
+}
+
+// Collects successful stock tool calls, re-fetches full data (incl. chart
+// series) for each unique symbol, and sends a rendered price card.
+async function sendStockCards(message, result) {
+  const aggregateToolResults = [
+    ...(Array.isArray(result?.toolResults) ? result.toolResults : []),
+    ...(Array.isArray(result?.steps)
+      ? result.steps.flatMap((step) => step?.toolResults || [])
+      : []),
+  ];
+
+  const seen = new Set();
+  const symbols = aggregateToolResults
+    .filter(
+      (item) =>
+        item?.type === "tool-result" &&
+        item?.toolName === "stock" &&
+        item?.output?.success &&
+        item?.output?.symbol,
+    )
+    .map((item) => String(item.output.symbol))
+    .filter((symbol) => {
+      if (seen.has(symbol)) return false;
+      seen.add(symbol);
+      return true;
+    })
+    .slice(0, 3); // Cap attachments per response.
+
+  for (const symbol of symbols) {
+    try {
+      const data = await fetchStock(symbol);
+      const buffer = renderStockCard({
+        symbol: data.symbol,
+        name: data.name,
+        exchange: data.exchange,
+        currency: data.currency,
+        price: data.price,
+        change: data.change,
+        percentChange: data.percentChange,
+        series: data.series,
+        brand: "Pawgrammer",
+      });
+      const attachment = new AttachmentBuilder(buffer, {
+        name: `stock-${data.symbol}.png`,
+      });
+      await message.channel.send({ files: [attachment] });
+    } catch (err) {
+      console.error(`Failed to render stock card for ${symbol}:`, err);
+    }
+  }
 }
 
 function wasToolUsed(result, toolName) {
