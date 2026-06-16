@@ -143,5 +143,4 @@ Rael is designed to:
 
 ## License
 
-Rael is licensed under DSAL v1.0
-See the full license in the [LICENSE](./LICENSE) file
+Rael is licensed under GPL-3.0. See the full license in the [LICENSE](./LICENSE) file
