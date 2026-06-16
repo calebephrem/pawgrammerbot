@@ -10,7 +10,14 @@ export const MODELS = [
     description: "General purpose model with strong reasoning.",
     aliases: ["gpt-oss", "oss", "gpt-oss-120b"],
   },
-    {
+  {
+    id: "qwen/qwen3-32b",
+    name: "Qwen 3 32B",
+    provider: "groq",
+    description: "Versatile model with balanced performance.",
+    aliases: ["qwen", "qwen3", "qwen3-32b"],
+  },
+  {
     id: "llama-3.3-70b-versatile",
     name: "llama-3.3",
     provider: "groq",
@@ -18,7 +25,7 @@ export const MODELS = [
     aliases: ["llama", "os", "llama-3.3"],
   },
   {
-    id:"poolside/laguna-xs.2:free",
+    id: "poolside/laguna-xs.2:free",
     name: "Laguna XS.2",
     provider: "openrouter",
     description: "Lightweight model for casual conversations.",
@@ -32,11 +39,11 @@ export const MODELS = [
     aliases: ["deepseek", "v4", "flash"],
   },
   {
-    id:"nex-agi/nex-n2-pro:free",
-    name:"Nex N2",
-    provider:"openrouter",
-    description:"a latest open source model great in coding.",
-    aliases : ["Nex-N2" , "Nex-AGI"]
+    id: "nex-agi/nex-n2-pro:free",
+    name: "Nex N2",
+    provider: "openrouter",
+    description: "a latest open source model great in coding.",
+    aliases: ["Nex-N2", "Nex-AGI"],
   },
   {
     id: "nvidia/nemotron-3-ultra-550b-a55b:free",
@@ -80,7 +87,11 @@ export function getUserModel(userId) {
   const selected = selectedModelId
     ? MODELS.find((model) => model.id === selectedModelId)
     : null;
-  return selected || MODELS.find((model) => model.id === DEFAULT_MODEL_ID) || MODELS[0];
+  return (
+    selected ||
+    MODELS.find((model) => model.id === DEFAULT_MODEL_ID) ||
+    MODELS[0]
+  );
 }
 
 export function setUserModel(userId, modelInput) {
