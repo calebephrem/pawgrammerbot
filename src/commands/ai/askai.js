@@ -1,7 +1,10 @@
 import { generateText, stepCountIs } from "ai";
+import { AttachmentBuilder } from "discord.js";
 import "dotenv/config";
 import { searchTool } from "../../tools/get-search.js";
+import { fetchStock, stockTool } from "../../tools/get-stock.js";
 import { createResetContextTool } from "../../tools/reset-context.js";
+import { renderStockCard } from "../../utils/stock-card.js";
 import { groq, openRouter } from "../../utils/ai.js";
 import {
   appendUserTurn,
@@ -57,6 +60,7 @@ const BASE_SYSTEM_PROMPT = [
 
   "Tool usage:",
   "- Use tools only when they add clear value.",
+  "- For stock/ticker/share-price questions, call the stock tool. The bot renders a price card automatically, so keep your text reply to a short one-line summary.",
   "- For web search: prioritize official docs, primary sources, or well-known repos.",
   "- Always include direct links when using web results.",
   "- Never fabricate sources.",
@@ -181,6 +185,7 @@ export default {
         stopWhen: stepCountIs(5),
         tools: {
           search: searchTool,
+          stock: stockTool,
           resetContext: createResetContextTool(message.author.id),
         },
       });
@@ -212,6 +217,9 @@ export default {
       for (const part of messageParts) {
         await message.channel.send(part);
       }
+
+      // If the AI looked up a stock, render and attach a visual price card.
+      await sendStockCards(message, result);
 
       const usedResetContext = wasToolUsed(result, "resetContext");
       if (!usedResetContext) {
@@ -360,6 +368,57 @@ function buildSystemPrompt(persona, personaPrompt) {
   }
 
   return sections.join("\n\n");
+}
+
+// Collects successful stock tool calls, re-fetches full data (incl. chart
+// series) for each unique symbol, and sends a rendered price card.
+async function sendStockCards(message, result) {
+  const aggregateToolResults = [
+    ...(Array.isArray(result?.toolResults) ? result.toolResults : []),
+    ...(Array.isArray(result?.steps)
+      ? result.steps.flatMap((step) => step?.toolResults || [])
+      : []),
+  ];
+
+  const seen = new Set();
+  const symbols = aggregateToolResults
+    .filter(
+      (item) =>
+        item?.type === "tool-result" &&
+        item?.toolName === "stock" &&
+        item?.output?.success &&
+        item?.output?.symbol,
+    )
+    .map((item) => String(item.output.symbol))
+    .filter((symbol) => {
+      if (seen.has(symbol)) return false;
+      seen.add(symbol);
+      return true;
+    })
+    .slice(0, 3); // Cap attachments per response.
+
+  for (const symbol of symbols) {
+    try {
+      const data = await fetchStock(symbol);
+      const buffer = renderStockCard({
+        symbol: data.symbol,
+        name: data.name,
+        exchange: data.exchange,
+        currency: data.currency,
+        price: data.price,
+        change: data.change,
+        percentChange: data.percentChange,
+        series: data.series,
+        brand: "Pawgrammer",
+      });
+      const attachment = new AttachmentBuilder(buffer, {
+        name: `stock-${data.symbol}.png`,
+      });
+      await message.channel.send({ files: [attachment] });
+    } catch (err) {
+      console.error(`Failed to render stock card for ${symbol}:`, err);
+    }
+  }
 }
 
 function wasToolUsed(result, toolName) {
