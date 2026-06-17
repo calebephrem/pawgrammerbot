@@ -3,3 +3,4 @@ node_modules/
 
 # Persistent user stats
 data/
+.npm/
