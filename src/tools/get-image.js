@@ -13,20 +13,32 @@ export function createGetImageTool(userId) {
     inputSchema: zodSchema(
       z.object({
         index: z
-          .number()
-          .int()
-          .positive()
-          .describe("The image number from the `[image #N — ...]` placeholder."),
+          .union([z.number().int().positive(), z.string().regex(/^\d+$/)])
+          .describe(
+            "The image number from the `[image #N — ...]` placeholder.",
+          ),
       }),
     ),
     execute: async ({ index }) => {
-      const entry = getImageBytes(userId, index);
+      const idx = Number(index);
+      if (!Number.isFinite(idx) || !Number.isInteger(idx) || idx <= 0) {
+        return {
+          found: false,
+          index,
+          error: `invalid image index: ${String(index)}`,
+        };
+      }
+      const entry = getImageBytes(userId, idx);
       if (!entry) {
-        return { found: false, index, error: `no image #${index} in this session` };
+        return {
+          found: false,
+          index: idx,
+          error: `no image #${idx} in this session`,
+        };
       }
       return {
         found: true,
-        index,
+        index: idx,
         mime: entry.mime,
         base64: entry.bytes.toString("base64"),
       };
