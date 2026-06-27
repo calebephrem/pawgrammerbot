@@ -1,7 +1,7 @@
 import { Client, IntentsBitField } from "discord.js";
 import "dotenv/config";
-import eventHandler from "./handlers/eventHandler.js";
 import askai from "./commands/ai/askai.js";
+import eventHandler from "./handlers/eventHandler.js";
 
 const client = new Client({
   intents: [
