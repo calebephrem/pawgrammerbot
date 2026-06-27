@@ -3,7 +3,7 @@ import "dotenv/config";
 import askai from "./commands/ai/askai.js";
 import eventHandler from "./handlers/eventHandler.js";
 
-const client = new Client({
+export const client = new Client({
   intents: [
     IntentsBitField.Flags.Guilds,
     IntentsBitField.Flags.GuildMessages,
@@ -24,7 +24,9 @@ client.on("messageCreate", async (message) => {
     .trim();
 
   if (!content) {
-    return message.reply("You mentioned me, but didn't say anything else!");
+    return message.reply(
+      "You just mentioned me, but didn't say anything else! What's up?",
+    );
   }
 
   try {
