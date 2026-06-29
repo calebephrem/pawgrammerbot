@@ -1,6 +1,6 @@
 {
   "name": "rael",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "AI-powered Discord bot built for natural conversation, multi-model flexibility, and useful utilities like vision, web search, live stock data, and usage tracking",
   "main": "src/index.ts",
   "type": "module",
