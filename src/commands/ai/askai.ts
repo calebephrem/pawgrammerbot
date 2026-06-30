@@ -171,7 +171,7 @@ async function executeAiRequest(
 
       success = true;
 
-      console.log({ provider, modelId });
+      // console.log({ provider, modelId });
     } catch (error) {
       console.error(
         `[FAIL] Model [${isVisionRequest ? "Vision Model" : modelConfig.name}] hit an exception or quota limit. Error:`,
