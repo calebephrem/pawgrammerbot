@@ -20,6 +20,9 @@ export default {
   async execute({ message, args, ctx }: CommandCallbackOpts) {
     if (message.author.bot) return;
 
+    if ((message as any)._processedByAskai) return;
+    (message as any)._processedByAskai = true;
+
     const { imageUrl, mimeType } = getAttachmentData(message);
     const question = parseQuestion(args, !!imageUrl);
 
